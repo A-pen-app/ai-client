@@ -18,7 +18,7 @@ type Config struct {
 	MessageType models.OCRMessageType
 }
 
-type service struct {
+type ocrStore struct {
 	mq       mq.MQ
 	aiClient Client
 	cfg      *Config
@@ -33,14 +33,14 @@ func NewOcrStore(mq mq.MQ, aiClient Client, config *Config) OCR {
 		}
 	}
 
-	return &service{
+	return &ocrStore{
 		mq:       mq,
 		aiClient: aiClient,
 		cfg:      config,
 	}
 }
 
-func (s *service) ScanName(ctx context.Context, link string) (string, error) {
+func (s *ocrStore) ScanName(ctx context.Context, link string) (string, error) {
 	if s.aiClient == nil {
 		return "", fmt.Errorf("AI client is not initialized")
 	}
@@ -72,7 +72,7 @@ func (s *service) ScanName(ctx context.Context, link string) (string, error) {
 	return result.Name, nil
 }
 
-func (s *service) ScanRawInfo(ctx context.Context, userID string, link string, platformType models.PlatformType) (*models.OCRRawInfo, error) {
+func (s *ocrStore) ScanRawInfo(ctx context.Context, userID string, link string, platformType models.PlatformType) (*models.OCRRawInfo, error) {
 	if s.aiClient == nil {
 		return nil, fmt.Errorf("AI client is not initialized")
 	}

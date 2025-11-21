@@ -3,6 +3,8 @@ package gemini
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"strings"
 
 	"github.com/A-pen-app/ai-clients/models"
 	"github.com/A-pen-app/ai-clients/store"
@@ -64,7 +66,8 @@ func (c *Client) Generate(ctx context.Context, message models.Message, opts mode
 		if err != nil {
 			return "", fmt.Errorf("failed to download image: %w", err)
 		}
-		promptParts = append(promptParts, genai.ImageData("image/jpeg", imageData))
+		mimeType := http.DetectContentType(imageData)
+		promptParts = append(promptParts, genai.ImageData(mimeType, imageData))
 	}
 
 	resp, err := model.GenerateContent(ctx, promptParts...)
@@ -81,12 +84,11 @@ func (c *Client) Generate(ctx context.Context, message models.Message, opts mode
 		return "", fmt.Errorf("empty content in Gemini response")
 	}
 
-	var resultText string
+	var resultText strings.Builder
 	for _, part := range candidate.Content.Parts {
 		if text, ok := part.(genai.Text); ok {
-			resultText += string(text)
+			resultText.WriteString(string(text))
 		}
 	}
-
-	return resultText, nil
+	return resultText.String(), nil
 }
