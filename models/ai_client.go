@@ -1,6 +1,6 @@
 package models
 
-type Message struct {
+type AIChatMessage struct {
 	SystemPrompt string
 	Text         string
 	ImageUrls    []string
@@ -13,7 +13,7 @@ const (
 	ResponseFormatText ResponseFormat = "text"
 )
 
-type Options struct {
+type AIClientOptions struct {
 	MaxTokens      int64
 	Model          string
 	ResponseFormat ResponseFormat

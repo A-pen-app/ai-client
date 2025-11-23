@@ -12,11 +12,11 @@ type ArticleConfig struct {
 }
 
 type articleStore struct {
-	aiClient Client
+	aiClient AIClient
 	cfg      *ArticleConfig
 }
 
-func NewArticleStore(aiClient Client, config *ArticleConfig) Article {
+func NewArticleStore(aiClient AIClient, config *ArticleConfig) Article {
 	if config == nil {
 		config = &ArticleConfig{
 			MaxToken: 2048,
@@ -36,13 +36,13 @@ func (s *articleStore) ExtractTags(ctx context.Context, content string, professi
 
 	systemPrompt := models.GetExtractTagsSystemPrompt(professionType)
 
-	message := models.Message{
+	message := models.AIChatMessage{
 		SystemPrompt: systemPrompt,
 		Text:         content,
 		ImageUrls:    []string{},
 	}
 
-	opts := models.Options{
+	opts := models.AIClientOptions{
 		MaxTokens:      s.cfg.MaxToken,
 		ResponseFormat: models.ResponseFormatJSON,
 	}
@@ -66,13 +66,13 @@ func (s *articleStore) Polish(ctx context.Context, content string, professionTyp
 
 	systemPrompt := models.GetPolishArticleSystemPrompt(professionType)
 
-	message := models.Message{
+	message := models.AIChatMessage{
 		SystemPrompt: systemPrompt,
 		Text:         content,
 		ImageUrls:    []string{},
 	}
 
-	opts := models.Options{
+	opts := models.AIClientOptions{
 		MaxTokens:      s.cfg.MaxToken,
 		ResponseFormat: models.ResponseFormatText,
 	}

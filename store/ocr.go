@@ -20,11 +20,11 @@ type Config struct {
 
 type ocrStore struct {
 	mq       mq.MQ
-	aiClient Client
+	aiClient AIClient
 	cfg      *Config
 }
 
-func NewOcrStore(mq mq.MQ, aiClient Client, config *Config) OCR {
+func NewOcrStore(mq mq.MQ, aiClient AIClient, config *Config) OCR {
 	if config == nil {
 		config = &Config{
 			MaxToken:    1024,
@@ -45,13 +45,13 @@ func (s *ocrStore) ScanName(ctx context.Context, link string) (string, error) {
 		return "", fmt.Errorf("AI client is not initialized")
 	}
 
-	message := models.Message{
+	message := models.AIChatMessage{
 		SystemPrompt: models.SystemContent,
 		Text:         models.NamePrompt,
 		ImageUrls:    []string{link},
 	}
 
-	opts := models.Options{
+	opts := models.AIClientOptions{
 		MaxTokens:      s.cfg.MaxToken,
 		ResponseFormat: models.ResponseFormatJSON,
 	}
@@ -79,13 +79,13 @@ func (s *ocrStore) ScanRawInfo(ctx context.Context, userID string, link string, 
 
 	prompt := models.GetInfoPrompt(platformType)
 
-	message := models.Message{
+	message := models.AIChatMessage{
 		SystemPrompt: models.SystemContent,
 		Text:         prompt,
 		ImageUrls:    []string{link},
 	}
 
-	opts := models.Options{
+	opts := models.AIClientOptions{
 		MaxTokens:      s.cfg.MaxToken,
 		ResponseFormat: models.ResponseFormatJSON,
 	}

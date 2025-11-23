@@ -19,7 +19,7 @@ type Client struct {
 }
 
 // NewClient creates a new Gemini client
-func NewClient(client *genai.Client, model string) store.Client {
+func NewClient(client *genai.Client, model string) store.AIClient {
 	if model == "" {
 		model = "gemini-2.5-flash"
 	}
@@ -29,7 +29,7 @@ func NewClient(client *genai.Client, model string) store.Client {
 	}
 }
 
-func (c *Client) Generate(ctx context.Context, message models.Message, opts models.Options) (string, error) {
+func (c *Client) Generate(ctx context.Context, message models.AIChatMessage, opts models.AIClientOptions) (string, error) {
 	if c.client == nil {
 		return "", fmt.Errorf("gemini client is not initialized")
 	}

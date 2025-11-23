@@ -14,7 +14,7 @@ type Client struct {
 	defaultModel openai.ChatModel
 }
 
-func NewClient(client *openai.Client, model openai.ChatModel) store.Client {
+func NewClient(client *openai.Client, model openai.ChatModel) store.AIClient {
 	if model == "" {
 		model = openai.ChatModelGPT4o
 	}
@@ -24,7 +24,7 @@ func NewClient(client *openai.Client, model openai.ChatModel) store.Client {
 	}
 }
 
-func (c *Client) Generate(ctx context.Context, message models.Message, opts models.Options) (string, error) {
+func (c *Client) Generate(ctx context.Context, message models.AIChatMessage, opts models.AIClientOptions) (string, error) {
 	if c.client == nil {
 		return "", fmt.Errorf("openai client is not initialized")
 	}

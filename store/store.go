@@ -16,6 +16,6 @@ type Article interface {
 	Polish(ctx context.Context, content string, professionType models.PlatformType) (string, error)
 }
 
-type Client interface {
-	Generate(ctx context.Context, message models.Message, opts models.Options) (string, error)
+type AIClient interface {
+	Generate(ctx context.Context, message models.AIChatMessage, opts models.AIClientOptions) (string, error)
 }
