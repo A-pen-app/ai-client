@@ -22,6 +22,7 @@ type Client struct {
 func NewClient(projectID string, location string, model string) (store.AIClient, error) {
 	ctx := context.Background()
 	client, err := genai.NewClient(ctx, &genai.ClientConfig{
+		Backend:  2,
 		Project:  projectID,
 		Location: location,
 	})
