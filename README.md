@@ -19,7 +19,7 @@ A Go library that provides unified AI client interface for OCR and article proce
 ### AI Client
 - 🔌 Unified interface for multiple AI providers
 - 🤖 OpenAI GPT-4o support
-- 🌟 Google Gemini (Vertex AI) support
+- 🌟 Google Gemini API support
 - 🖼️ Vision API support for image analysis
 - 🛡️ Comprehensive error handling
 - 🔧 Flexible configuration options
@@ -32,9 +32,9 @@ go get github.com/A-pen-app/ai-client
 
 ## Requirements
 
-- Go 1.23.0 or higher
+- Go 1.24.0 or higher
 - OpenAI API key (for OpenAI client)
-- Google Cloud Project with Vertex AI enabled (for Gemini client)
+- Google Cloud Project with Gemini API access (for Gemini client)
 - Message queue (implements `mq.MQ` interface) - for OCR service only
 
 ## Usage
@@ -63,7 +63,7 @@ import (
     "github.com/A-pen-app/ai-client/client/gemini"
 )
 
-// Create Gemini client (uses GCP Application Default Credentials)
+// Create Gemini client
 aiClient, err := gemini.NewClient("your-project-id", "us-central1", "gemini-2.5-flash")
 if err != nil {
     log.Fatal(err)
@@ -201,7 +201,7 @@ func NewClient(projectID string, location string, model string) (store.AIClient,
 **Parameters:**
 - `projectID`: GCP project ID
 - `location`: GCP region (e.g., "us-central1")
-- `model`: Model name (e.g., "gemini-2.5-flash")
+- `model`: Model name (e.g., "gemini-2.5-flash", default: "gemini-2.5-flash")
 
 ### Article Service
 
@@ -621,7 +621,7 @@ func main() {
 ai-client/
 ├── client/              # AI provider implementations
 │   ├── openai/         # OpenAI GPT-4o client
-│   └── gemini/         # Google Gemini (Vertex AI) client
+│   └── gemini/         # Google Gemini API client
 ├── models/             # Data models and prompts
 │   ├── ai_client.go    # Common AI client models
 │   ├── article.go      # Article processing prompts
@@ -641,7 +641,7 @@ The library provides detailed error messages for common issues:
 - `"openai API key cannot be empty"` - Missing API key
 - `"openai client is not initialized"` - Client not properly configured
 - `"gemini client is not initialized"` - Gemini client not initialized
-- `"failed to create Vertex AI client"` - GCP authentication or configuration issue
+- `"failed to create Gemini client"` - GCP authentication or configuration issue
 
 ### Service Errors
 - `"AI client is not initialized"` - AI client not provided to service
@@ -657,7 +657,7 @@ The library provides detailed error messages for common issues:
 
 ### Core Dependencies
 - [openai-go](https://github.com/openai/openai-go) - OpenAI API client (v2.7.1+)
-- [cloud.google.com/go/vertexai](https://pkg.go.dev/cloud.google.com/go/vertexai) - Google Vertex AI client (v0.15.0+)
+- [google.golang.org/genai](https://pkg.go.dev/google.golang.org/genai) - Google Gemini API client (v1.36.0+)
 
 ### Internal Dependencies
 - [A-pen-app/mq](https://github.com/A-pen-app/mq) - Message queue abstraction (v2.0.5+)

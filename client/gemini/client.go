@@ -6,24 +6,27 @@ import (
 	"net/http"
 	"strings"
 
-	"cloud.google.com/go/vertexai/genai"
 	"github.com/A-pen-app/ai-client/models"
 	"github.com/A-pen-app/ai-client/store"
 	"github.com/A-pen-app/ai-client/util"
+	"google.golang.org/genai"
 )
 
-// Client wraps Gemini Vertex AI client and implements the AIClient interface
+// Client wraps Gemini API client and implements the AIClient interface
 type Client struct {
 	client       *genai.Client
 	defaultModel string
 }
 
-// NewClient creates a new Gemini Vertex AI client using GCP Application Default Credentials
+// NewClient creates a new Gemini API client
 func NewClient(projectID string, location string, model string) (store.AIClient, error) {
 	ctx := context.Background()
-	client, err := genai.NewClient(ctx, projectID, location)
+	client, err := genai.NewClient(ctx, &genai.ClientConfig{
+		Project:  projectID,
+		Location: location,
+	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create Vertex AI client: %w", err)
+		return nil, fmt.Errorf("failed to create Gemini client: %w", err)
 	}
 
 	if model == "" {
@@ -45,26 +48,10 @@ func (c *Client) Generate(ctx context.Context, message models.AIChatMessage, opt
 		modelName = opts.Model
 	}
 
-	model := c.client.GenerativeModel(modelName)
-
-	if message.SystemPrompt != "" {
-		model.SystemInstruction = &genai.Content{
-			Parts: []genai.Part{genai.Text(message.SystemPrompt)},
-		}
-	}
-
-	if opts.ResponseFormat == models.ResponseFormatJSON {
-		model.ResponseMIMEType = "application/json"
-	}
-
-	if opts.MaxTokens > 0 {
-		model.SetMaxOutputTokens(int32(opts.MaxTokens))
-	}
-
-	var promptParts []genai.Part
+	var contentParts []*genai.Part
 
 	if message.Text != "" {
-		promptParts = append(promptParts, genai.Text(message.Text))
+		contentParts = append(contentParts, genai.NewPartFromText(message.Text))
 	}
 
 	for _, url := range message.ImageUrls {
@@ -73,12 +60,31 @@ func (c *Client) Generate(ctx context.Context, message models.AIChatMessage, opt
 			return "", fmt.Errorf("failed to download image: %w", err)
 		}
 		mimeType := http.DetectContentType(imageData)
-		promptParts = append(promptParts, genai.ImageData(mimeType, imageData))
+		contentParts = append(contentParts, genai.NewPartFromBytes(imageData, mimeType))
 	}
 
-	resp, err := model.GenerateContent(ctx, promptParts...)
+	contents := []*genai.Content{
+		genai.NewContentFromParts(contentParts, genai.RoleUser),
+	}
+
+	// Build generation config
+	config := &genai.GenerateContentConfig{}
+
+	if message.SystemPrompt != "" {
+		config.SystemInstruction = genai.NewContentFromText(message.SystemPrompt, genai.RoleUser)
+	}
+
+	if opts.ResponseFormat == models.ResponseFormatJSON {
+		config.ResponseMIMEType = "application/json"
+	}
+
+	if opts.MaxTokens > 0 {
+		config.MaxOutputTokens = int32(opts.MaxTokens)
+	}
+
+	resp, err := c.client.Models.GenerateContent(ctx, modelName, contents, config)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to generate content: %w", err)
 	}
 
 	if len(resp.Candidates) == 0 {
@@ -92,9 +98,10 @@ func (c *Client) Generate(ctx context.Context, message models.AIChatMessage, opt
 
 	var resultText strings.Builder
 	for _, part := range candidate.Content.Parts {
-		if text, ok := part.(genai.Text); ok {
-			resultText.WriteString(string(text))
+		if part.Text != "" {
+			resultText.WriteString(part.Text)
 		}
 	}
+
 	return resultText.String(), nil
 }
