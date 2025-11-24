@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/A-pen-app/ai-clients/models"
+	"github.com/A-pen-app/ai-client/models"
 )
 
 type ArticleConfig struct {

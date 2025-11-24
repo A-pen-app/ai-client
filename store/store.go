@@ -3,7 +3,7 @@ package store
 import (
 	"context"
 
-	"github.com/A-pen-app/ai-clients/models"
+	"github.com/A-pen-app/ai-client/models"
 )
 
 type OCR interface {

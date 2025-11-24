@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/A-pen-app/ai-clients/models"
-	"github.com/A-pen-app/ai-clients/store"
+	"github.com/A-pen-app/ai-client/models"
+	"github.com/A-pen-app/ai-client/store"
 	"github.com/openai/openai-go/v2"
 	"github.com/openai/openai-go/v2/option"
 )

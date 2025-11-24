@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"cloud.google.com/go/vertexai/genai"
-	"github.com/A-pen-app/ai-clients/models"
-	"github.com/A-pen-app/ai-clients/store"
-	"github.com/A-pen-app/ai-clients/util"
+	"github.com/A-pen-app/ai-client/models"
+	"github.com/A-pen-app/ai-client/store"
+	"github.com/A-pen-app/ai-client/util"
 )
 
 // Client wraps Gemini Vertex AI client and implements the AIClient interface

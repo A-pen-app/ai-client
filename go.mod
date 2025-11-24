@@ -1,4 +1,4 @@
-module github.com/A-pen-app/ai-clients
+module github.com/A-pen-app/ai-client
 
 go 1.23.0
 

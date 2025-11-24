@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/A-pen-app/ai-clients/models"
+	"github.com/A-pen-app/ai-client/models"
 	"github.com/A-pen-app/logging"
 	"github.com/A-pen-app/mq/v2"
 	"github.com/tidwall/sjson"
