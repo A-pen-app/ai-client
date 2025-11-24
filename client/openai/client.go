@@ -7,6 +7,7 @@ import (
 	"github.com/A-pen-app/ai-clients/models"
 	"github.com/A-pen-app/ai-clients/store"
 	"github.com/openai/openai-go/v2"
+	"github.com/openai/openai-go/v2/option"
 )
 
 type Client struct {
@@ -14,14 +15,21 @@ type Client struct {
 	defaultModel openai.ChatModel
 }
 
-func NewClient(client *openai.Client, model openai.ChatModel) store.AIClient {
+func NewClient(apiKey string, model openai.ChatModel) (store.AIClient, error) {
+	if apiKey == "" {
+		return nil, fmt.Errorf("openai API key cannot be empty")
+	}
+
+	client := openai.NewClient(option.WithAPIKey(apiKey))
+
 	if model == "" {
 		model = openai.ChatModelGPT4o
 	}
+
 	return &Client{
-		client:       client,
+		client:       &client,
 		defaultModel: model,
-	}
+	}, nil
 }
 
 func (c *Client) Generate(ctx context.Context, message models.AIChatMessage, opts models.AIClientOptions) (string, error) {

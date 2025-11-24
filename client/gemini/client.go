@@ -6,27 +6,33 @@ import (
 	"net/http"
 	"strings"
 
+	"cloud.google.com/go/vertexai/genai"
 	"github.com/A-pen-app/ai-clients/models"
 	"github.com/A-pen-app/ai-clients/store"
 	"github.com/A-pen-app/ai-clients/util"
-	"github.com/google/generative-ai-go/genai"
 )
 
-// Client wraps Gemini client and implements the AIClient interface
+// Client wraps Gemini Vertex AI client and implements the AIClient interface
 type Client struct {
 	client       *genai.Client
 	defaultModel string
 }
 
-// NewClient creates a new Gemini client
-func NewClient(client *genai.Client, model string) store.AIClient {
+// NewClient creates a new Gemini Vertex AI client using GCP Application Default Credentials
+func NewClient(projectID string, location string, model string) (store.AIClient, error) {
+	ctx := context.Background()
+	client, err := genai.NewClient(ctx, projectID, location)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Vertex AI client: %w", err)
+	}
+
 	if model == "" {
 		model = "gemini-2.5-flash"
 	}
 	return &Client{
 		client:       client,
 		defaultModel: model,
-	}
+	}, nil
 }
 
 func (c *Client) Generate(ctx context.Context, message models.AIChatMessage, opts models.AIClientOptions) (string, error) {

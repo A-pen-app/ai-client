@@ -13,9 +13,8 @@ import (
 )
 
 type Config struct {
-	MaxToken    int64
-	Topic       models.OCRTopic
-	MessageType models.OCRMessageType
+	MaxToken int64
+	IsProd   bool
 }
 
 type ocrStore struct {
@@ -27,9 +26,8 @@ type ocrStore struct {
 func NewOcrStore(mq mq.MQ, aiClient AIClient, config *Config) OCR {
 	if config == nil {
 		config = &Config{
-			MaxToken:    1024,
-			Topic:       models.OCRTopicDev,
-			MessageType: models.OCRMessageTypeIdentifyOCR,
+			MaxToken: 1024,
+			IsProd:   false,
 		}
 	}
 
@@ -104,11 +102,16 @@ func (s *ocrStore) ScanRawInfo(ctx context.Context, userID string, link string, 
 		return nil, err
 	}
 
-	if err := s.mq.Send(string(s.cfg.Topic), models.OCREventMessage{
+	ocrTopic := models.OCRTopicDev
+	if s.cfg.IsProd {
+		ocrTopic = models.OCRTopicProd
+	}
+
+	if err := s.mq.Send(string(ocrTopic), models.OCREventMessage{
 		UserID:    userID,
 		Payload:   modifiedJSON,
 		CreatedAt: time.Now(),
-		Type:      string(s.cfg.MessageType),
+		Type:      string(models.OCRMessageTypeIdentifyOCR),
 		Source:    string(platformType),
 	}); err != nil {
 		logging.Errorw(ctx, "Failed to send ocr result", "error", err)
