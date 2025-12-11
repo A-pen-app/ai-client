@@ -1,5 +1,12 @@
 package models
 
+type ExtractTagsResult struct {
+	CollaborationTypes []string `json:"collaboration_types,omitempty"`
+	Departments        []string `json:"departments,omitempty"`
+	Positions          []string `json:"positions,omitempty"`
+	WorkLocations      []string `json:"work_locations,omitempty"`
+}
+
 func GetExtractTagsSystemPrompt(professionType PlatformType) string {
 	switch professionType {
 	case PlatformTypeApen:
@@ -107,10 +114,10 @@ C. 廣泛範圍補足 (優化規則)： 若步驟 2A 的結果中，同時包含
 
 请以以下 JSON 格式輸出：
 {
-  "job_types": ["工作類型陣列"],
+  "collaboration_types": ["工作類型陣列"],
   "departments": ["需求科別陣列"],
   "positions": ["需求職級陣列"],
-  "locations  ": ["職缺地點陣列"]
+  "work_locations": ["職缺地點陣列"]
 }
 `
 
@@ -128,7 +135,7 @@ const otherExtractTagsPrompt = `
 
 请以以下 JSON 格式輸出：
 {
-  "job_types": ["工作類型陣列"],
-  "locations": ["職缺地點陣列"]
+  "collaboration_types": ["工作類型陣列"],
+  "work_locations": ["職缺地點陣列"]
 }
 `

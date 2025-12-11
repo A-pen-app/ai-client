@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/A-pen-app/ai-client/models"
@@ -29,9 +30,9 @@ func NewArticleStore(aiClient AIClient, config *ArticleConfig) Article {
 	}
 }
 
-func (s *articleStore) ExtractTags(ctx context.Context, content string, professionType models.PlatformType) (string, error) {
+func (s *articleStore) ExtractTags(ctx context.Context, content string, professionType models.PlatformType) (*models.ExtractTagsResult, error) {
 	if s.aiClient == nil {
-		return "", fmt.Errorf("AI client is not initialized")
+		return nil, fmt.Errorf("AI client is not initialized")
 	}
 
 	systemPrompt := models.GetExtractTagsSystemPrompt(professionType)
@@ -49,14 +50,19 @@ func (s *articleStore) ExtractTags(ctx context.Context, content string, professi
 
 	resp, err := s.aiClient.Generate(ctx, message, opts)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if resp == "" {
-		return "", fmt.Errorf("empty response content from AI client")
+		return nil, fmt.Errorf("empty response content from AI client")
 	}
 
-	return resp, nil
+	var result models.ExtractTagsResult
+	if err := json.Unmarshal([]byte(resp), &result); err != nil {
+		return nil, fmt.Errorf("failed to parse extract tags response: %w", err)
+	}
+
+	return &result, nil
 }
 
 func (s *articleStore) Polish(ctx context.Context, content string, professionType models.PlatformType) (string, error) {

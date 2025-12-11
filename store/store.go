@@ -12,7 +12,7 @@ type OCR interface {
 }
 
 type Article interface {
-	ExtractTags(ctx context.Context, content string, professionType models.PlatformType) (string, error)
+	ExtractTags(ctx context.Context, content string, professionType models.PlatformType) (*models.ExtractTagsResult, error)
 	Polish(ctx context.Context, content string, professionType models.PlatformType) (string, error)
 }
 
