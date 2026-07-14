@@ -21,7 +21,7 @@ type SalaryDetail struct {
 	Max      *int   `json:"max,omitempty"`
 	Currency string `json:"currency,omitempty"`
 	// Negotiable is true when the post has no usable salary info (薪資面議).
-	Negotiable bool `json:"negotiable,omitempty"`
+	Negotiable bool `json:"negotiable"`
 }
 
 func GetExtractTagsSystemPrompt(professionType PlatformType) string {
