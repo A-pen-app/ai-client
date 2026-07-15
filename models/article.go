@@ -5,6 +5,23 @@ type ExtractTagsResult struct {
 	Departments        []string `json:"departments,omitempty"`
 	Positions          []string `json:"positions,omitempty"`
 	WorkLocations      []string `json:"work_locations,omitempty"`
+	// Salary is the human-readable one-liner (e.g. 「月薪 6 萬起」、「薪資面議」).
+	Salary *string `json:"salary,omitempty"`
+	// SalaryDetail is the structured counterpart of Salary; omitted when the
+	// model cannot confidently structure the information.
+	SalaryDetail *SalaryDetail `json:"salary_detail,omitempty"`
+}
+
+// SalaryDetail is the structured salary extracted from a recruit post.
+type SalaryDetail struct {
+	// Type: monthly | yearly | hourly | per_session | license_fee | commission
+	Type string `json:"type,omitempty"`
+	// Min/Max are amounts in TWD; percentages when Type is "commission".
+	Min      *int   `json:"min,omitempty"`
+	Max      *int   `json:"max,omitempty"`
+	Currency string `json:"currency,omitempty"`
+	// Negotiable is true when the post has no usable salary info (薪資面議).
+	Negotiable bool `json:"negotiable"`
 }
 
 func GetExtractTagsSystemPrompt(professionType PlatformType) string {
@@ -87,7 +104,7 @@ const otherPolishArticlePrompt = `
 
 const apenExtractTagsPrompt = `
 # Role
-你是一位精通台灣醫療體系與徵才市場的「結構化資料萃取專家」。你的任務是從醫療徵才文本中，精準提取 4 類核心標籤：工作類型、需求科別、需求職級、職缺地點。
+你是一位精通台灣醫療體系與徵才市場的「結構化資料萃取專家」。你的任務是從醫療徵才文本中，精準提取 5 類核心標籤：工作類型、需求科別、需求職級、職缺地點、薪資。
 
 # Constraints & Rules
 請嚴格遵守以下邏輯與格式要求：
@@ -219,19 +236,45 @@ const apenExtractTagsPrompt = `
   南投縣, 雲林縣, 嘉義市, 嘉義縣, 臺南市, 高雄市, 屏東縣, 臺東縣, 花蓮縣,
   宜蘭縣, 澎湖縣, 金門縣, 連江縣。
 • 格式：請以字串陣列回傳，並確保縣市排在區名之前。
+
+## 5. 薪資 (salary 與 salary_detail)
+• 你需要同時輸出「顯示字串 salary」與「結構化 salary_detail」兩個欄位。
+• 醫師薪資主要形式（優先辨識）：
+  - 月薪 / 年薪（固定薪）
+  - 牌費 / 診次費
+  - 自費抽成
+• salary 輸出規則：
+  1. 找到上述主要薪資資訊 → 精簡呈現，例如：
+     「月薪 xx 萬起」「年薪 xxx 萬起」
+     「牌費 x 萬/診費 xxxx 元」
+  2. 同時有績效獎金、宿舍、交通等補貼 → 結尾加上「其他福利，詳見職缺詳情」
+  3. 主要薪資 + 補貼總長度不超過 25 字
+  4. 完全找不到薪資資訊 → 輸出「薪資面議」
+  5. 只有模糊描述（如「薪資優渥」）→ 輸出「薪資面議」
+  6. 直接輸出結果，不要加任何標題或前綴文字
+• salary_detail 輸出規則：
+  - type：monthly（月薪）/ yearly（年薪）/ per_session（診次費）/ license_fee（牌費）/ commission（自費抽成）
+  - min / max：金額範圍，單位為「元」的整數（如月薪 6 萬起 → min 60000；無上限則省略 max）；
+    type 為 commission 時 min / max 改填百分比整數
+  - currency：固定 "TWD"
+  - negotiable：salary 為「薪資面議」時為 true，並省略 type / min / max
+  - 完全無法判定結構化內容時，省略整個 salary_detail
+
 # Output Format (JSON)
 請嚴格只輸出 JSON 格式，不包含任何 Markdown 語法或前後的廢話。
 {
   "collaboration_types": [0, 1],
   "departments": ["科別字串陣列"],
   "positions": ["PGY", "Resident", "VS"],
-  "work_locations": ["職缺地點陣列"]
+  "work_locations": ["職缺地點陣列"],
+  "salary": "月薪 xx 萬起",
+  "salary_detail": {"type": "monthly", "min": 60000, "max": 80000, "currency": "TWD", "negotiable": false}
 }
 `
 
 const otherExtractTagsPrompt = `
 # Role
-你是一位精通台灣醫療體系與徵才市場的「結構化資料萃取專家」，特別針對「藥師圈、護理站」平台的徵才文本進行精準提取。你的任務是從醫療徵才文本中，精準提取 2 類核心標籤：工作類型、職缺地點。
+你是一位精通台灣醫療體系與徵才市場的「結構化資料萃取專家」，特別針對「藥師圈、護理站」平台的徵才文本進行精準提取。你的任務是從醫療徵才文本中，精準提取 3 類核心標籤：工作類型、職缺地點、薪資。
 
 # Constraints & Rules
 請嚴格遵守以下邏輯與格式要求：
@@ -258,10 +301,33 @@ const otherExtractTagsPrompt = `
     範例：應回傳 ["臺北市", "臺中市"]。
 • 格式：請以字串陣列 [Array of Strings] 回傳，並確保縣市排在區名之前。若完全未提及地點，回傳 []。
 
+## 3. 薪資 (salary 與 salary_detail)
+• 你需要同時輸出「顯示字串 salary」與「結構化 salary_detail」兩個欄位。
+• 薪資可能包含以下形式：
+  - 月薪 / 年薪
+  - 時薪（兼職）
+  - 績效獎金
+  - 夜班加給
+• salary 輸出規則：
+  1. 找到薪資資訊 → 用一句話精簡呈現，例如：
+     「月薪 6 萬起」「時薪 300 元」「月薪 4.5 萬，夜班另有加給」
+  2. 不超過 15 字
+  3. 完全找不到薪資資訊 → 輸出「薪資面議」
+  4. 只有模糊描述（如「薪資優渥」）→ 輸出「薪資面議」
+  5. 直接輸出結果，不要加任何標題或前綴文字
+• salary_detail 輸出規則：
+  - type：monthly（月薪）/ yearly（年薪）/ hourly（時薪）
+  - min / max：金額範圍，單位為「元」的整數（如月薪 6 萬起 → min 60000；無上限則省略 max）
+  - currency：固定 "TWD"
+  - negotiable：salary 為「薪資面議」時為 true，並省略 type / min / max
+  - 完全無法判定結構化內容時，省略整個 salary_detail
+
 # Output Format (JSON)
 請嚴格只輸出 JSON 格式，不包含任何 Markdown 語法或前後的廢話。
 {
   "collaboration_types": [0, 1],
-  "work_locations": ["職缺地點陣列"]
+  "work_locations": ["職缺地點陣列"],
+  "salary": "月薪 6 萬起",
+  "salary_detail": {"type": "monthly", "min": 60000, "currency": "TWD", "negotiable": false}
 }
 `
