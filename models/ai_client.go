@@ -1,9 +1,18 @@
 package models
 
+// InputFile is one attachment with its type stated by the caller. Sniffing is
+// not enough — Go's table has no HEIC, so an iPhone photo reads as nothing.
+type InputFile struct {
+	URL      string
+	MimeType string
+}
+
 type AIChatMessage struct {
 	SystemPrompt string
 	Text         string
-	ImageUrls    []string
+	Files        []InputFile
+	// ImageUrls is the older, sniffed form kept for existing callers.
+	ImageUrls []string
 }
 
 type ResponseFormat string

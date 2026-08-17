@@ -55,8 +55,16 @@ func (c *Client) Generate(ctx context.Context, message models.AIChatMessage, opt
 		contentParts = append(contentParts, genai.NewPartFromText(message.Text))
 	}
 
+	for _, f := range message.Files {
+		data, err := util.DownloadFile(ctx, f.URL)
+		if err != nil {
+			return "", fmt.Errorf("failed to download file: %w", err)
+		}
+		contentParts = append(contentParts, genai.NewPartFromBytes(data, f.MimeType))
+	}
+
 	for _, url := range message.ImageUrls {
-		imageData, err := util.DownloadImage(ctx, url)
+		imageData, err := util.DownloadFile(ctx, url)
 		if err != nil {
 			return "", fmt.Errorf("failed to download image: %w", err)
 		}

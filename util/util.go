@@ -12,8 +12,8 @@ var httpClient = &http.Client{
 	Timeout: time.Second * 30,
 }
 
-// DownloadImage downloads an image from a URL and returns the image data
-func DownloadImage(ctx context.Context, url string) ([]byte, error) {
+// DownloadFile downloads a file from a URL and returns its bytes.
+func DownloadFile(ctx context.Context, url string) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
@@ -21,17 +21,17 @@ func DownloadImage(ctx context.Context, url string) ([]byte, error) {
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to download image: %w", err)
+		return nil, fmt.Errorf("failed to download file: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to download image: status code %d", resp.StatusCode)
+		return nil, fmt.Errorf("failed to download file: status code %d", resp.StatusCode)
 	}
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read image data: %w", err)
+		return nil, fmt.Errorf("failed to read file: %w", err)
 	}
 
 	return data, nil

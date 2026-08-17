@@ -70,6 +70,45 @@ func (s *ocrStore) ScanName(ctx context.Context, link string) (string, error) {
 	return result.Name, nil
 }
 
+func (s *ocrStore) ScanCompany(ctx context.Context, file models.InputFile) (*models.CompanyInfo, error) {
+	if s.aiClient == nil {
+		return nil, fmt.Errorf("AI client is not initialized")
+	}
+
+	message := models.AIChatMessage{
+		SystemPrompt: models.SystemContent,
+		Text:         models.CompanyPrompt,
+		Files:        []models.InputFile{file},
+	}
+
+	opts := models.AIClientOptions{
+		MaxTokens:      s.cfg.MaxToken,
+		ResponseFormat: models.ResponseFormatJSON,
+	}
+
+	resp, err := s.aiClient.Generate(ctx, message, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	raw := struct {
+		CompanyName string `json:"company_name"`
+		TaxID       string `json:"tax_id"`
+	}{}
+	if err := json.Unmarshal([]byte(resp), &raw); err != nil {
+		return nil, err
+	}
+
+	info := models.CompanyInfo{}
+	if raw.CompanyName != "" {
+		info.CompanyName = &raw.CompanyName
+	}
+	if raw.TaxID != "" {
+		info.TaxID = &raw.TaxID
+	}
+	return &info, nil
+}
+
 func (s *ocrStore) ScanRawInfo(ctx context.Context, userID string, link string, platformType models.PlatformType) (*models.OCRRawInfo, error) {
 	if s.aiClient == nil {
 		return nil, fmt.Errorf("AI client is not initialized")
