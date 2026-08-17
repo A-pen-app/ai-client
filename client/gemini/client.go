@@ -56,20 +56,19 @@ func (c *Client) Generate(ctx context.Context, message models.AIChatMessage, opt
 	}
 
 	for _, f := range message.Files {
-		data, err := util.DownloadFile(ctx, f.URL)
+		data, served, err := util.DownloadFile(ctx, f.URL)
 		if err != nil {
 			return "", fmt.Errorf("failed to download file: %w", err)
 		}
-		contentParts = append(contentParts, genai.NewPartFromBytes(data, f.MimeType))
+		contentParts = append(contentParts, genai.NewPartFromBytes(data, mimeType(f.MimeType, served, data)))
 	}
 
 	for _, url := range message.ImageUrls {
-		imageData, err := util.DownloadFile(ctx, url)
+		imageData, served, err := util.DownloadFile(ctx, url)
 		if err != nil {
 			return "", fmt.Errorf("failed to download image: %w", err)
 		}
-		mimeType := http.DetectContentType(imageData)
-		contentParts = append(contentParts, genai.NewPartFromBytes(imageData, mimeType))
+		contentParts = append(contentParts, genai.NewPartFromBytes(imageData, mimeType("", served, imageData)))
 	}
 
 	contents := []*genai.Content{
@@ -113,4 +112,17 @@ func (c *Client) Generate(ctx context.Context, message models.AIChatMessage, opt
 	}
 
 	return resultText.String(), nil
+}
+
+// mimeType picks the most trustworthy answer available. Sniffing is last: Go's
+// table has no HEIC, so an iPhone photo would go out as octet-stream and read
+// as nothing.
+func mimeType(stated, served string, data []byte) string {
+	if stated != "" {
+		return stated
+	}
+	if served != "" && served != "application/octet-stream" {
+		return strings.TrimSpace(strings.Split(served, ";")[0])
+	}
+	return http.DetectContentType(data)
 }
