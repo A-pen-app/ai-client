@@ -159,3 +159,23 @@ const pharInfoPrompt = `
   "valid_date": "YYYY-MM-DD"
 }
 	`
+
+// CompanyInfo is what a registration document states; nil when it does not.
+type CompanyInfo struct {
+	CompanyName *string `json:"company_name"`
+	TaxID       *string `json:"tax_id"`
+}
+
+const CompanyPrompt = `
+這是一份公司或商業登記文件（可能是公司登記表、商業登記抄本、營業人銷售額與稅額申報書、
+或醫療器材商許可執照），請辨識以下兩個欄位，並以 JSON 格式輸出：
+{
+  "company_name": "登記的公司或商號全名",
+  "tax_id": "統一編號，8 位數字"
+}
+
+規則：
+- company_name 要完整登記名稱，包含「股份有限公司」「有限公司」「商行」等組織形式。
+- tax_id 只輸出 8 位數字，不含任何符號或文字。
+- 找不到的欄位請輸出空字串，不要臆測、不要從其他欄位推算。
+`

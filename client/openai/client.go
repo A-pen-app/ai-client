@@ -48,6 +48,12 @@ func (c *Client) Generate(ctx context.Context, message models.AIChatMessage, opt
 		userContentParts = append(userContentParts, openai.TextContentPart(message.Text))
 	}
 
+	// Rejected rather than ignored: a dropped attachment leaves the model
+	// answering a prompt with nothing to look at.
+	if len(message.Files) > 0 {
+		return "", fmt.Errorf("openai: Files not supported, use ImageUrls")
+	}
+
 	for _, url := range message.ImageUrls {
 		userContentParts = append(userContentParts, openai.ImageContentPart(
 			openai.ChatCompletionContentPartImageImageURLParam{
