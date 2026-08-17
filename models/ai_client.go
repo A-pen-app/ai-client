@@ -11,7 +11,7 @@ type AIChatMessage struct {
 	SystemPrompt string
 	Text         string
 	Files        []InputFile
-	// ImageUrls is the older, sniffed form kept for existing callers.
+	// Deprecated: use Files, which states the type instead of sniffing it.
 	ImageUrls []string
 }
 
